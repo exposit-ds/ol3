@@ -141,6 +141,13 @@ ol.interaction.Draw = function(options) {
   this.mode_ = ol.interaction.Draw.getMode_(this.type_);
 
   /**
+   * If true, point will follow the cursor when drawing.
+   * @type {boolean}
+   * @private
+   */
+  this.followCursor_ = options.followCursor === false ? options.followCursor : true;
+
+  /**
    * The number of points that must be drawn before a polygon ring or line
    * string can be finished.  The default is 3 for polygon rings and 2 for
    * line strings.
@@ -421,7 +428,9 @@ ol.interaction.Draw.handleUpEvent_ = function(event) {
  */
 ol.interaction.Draw.prototype.handlePointerMove_ = function(event) {
   if (this.finishCoordinate_) {
-    this.modifyDrawing_(event);
+    if (event.type !== ol.MapBrowserEvent.EventType.POINTERMOVE || this.followCursor_) {
+      this.modifyDrawing_(event);
+    }
   } else {
     this.createOrUpdateSketchPoint_(event);
   }
