@@ -2627,6 +2627,14 @@ olx.interaction.DrawOptions.prototype.type;
 
 
 /**
+ * Follow the cursor when drawing. Default is 'true'.
+ * @type {boolean}
+ * @api
+ */
+olx.interaction.DrawOptions.prototype.followCursor;
+
+
+/**
  * The number of points that can be drawn before a polygon ring or line string
  * is finished. The default is no restriction.
  * @type {number|undefined}
