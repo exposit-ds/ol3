@@ -4,7 +4,6 @@ goog.provide('ol.source.WMTSRequestEncoding');
 goog.require('goog.asserts');
 goog.require('goog.uri.utils');
 goog.require('ol.TileUrlFunction');
-goog.require('ol.TileUrlFunctionType');
 goog.require('ol.array');
 goog.require('ol.extent');
 goog.require('ol.object');
@@ -54,13 +53,6 @@ ol.source.WMTS = function(options) {
    * @type {!Object}
    */
   this.dimensions_ = options.dimensions !== undefined ? options.dimensions : {};
-
-  /**
-   * @private
-   * @type {string}
-   */
-  this.dimensionsKey_ = '';
-  this.resetDimensionsKey_();
 
   /**
    * @private
@@ -188,6 +180,8 @@ ol.source.WMTS = function(options) {
     wrapX: options.wrapX !== undefined ? options.wrapX : false
   });
 
+  this.setKey(this.getKeyForDimensions_());
+
 };
 goog.inherits(ol.source.WMTS, ol.source.TileImage);
 
@@ -211,14 +205,6 @@ ol.source.WMTS.prototype.getDimensions = function() {
  */
 ol.source.WMTS.prototype.getFormat = function() {
   return this.format_;
-};
-
-
-/**
- * @inheritDoc
- */
-ol.source.WMTS.prototype.getKeyParams = function() {
-  return this.dimensionsKey_;
 };
 
 
@@ -274,14 +260,15 @@ ol.source.WMTS.prototype.getVersion = function() {
 
 /**
  * @private
+ * @return {string} The key for the current dimensions.
  */
-ol.source.WMTS.prototype.resetDimensionsKey_ = function() {
+ol.source.WMTS.prototype.getKeyForDimensions_ = function() {
   var i = 0;
   var res = [];
   for (var key in this.dimensions_) {
     res[i++] = key + '-' + this.dimensions_[key];
   }
-  this.dimensionsKey_ = res.join('/');
+  return res.join('/');
 };
 
 
@@ -292,8 +279,7 @@ ol.source.WMTS.prototype.resetDimensionsKey_ = function() {
  */
 ol.source.WMTS.prototype.updateDimensions = function(dimensions) {
   ol.object.assign(this.dimensions_, dimensions);
-  this.resetDimensionsKey_();
-  this.changed();
+  this.setKey(this.getKeyForDimensions_());
 };
 
 

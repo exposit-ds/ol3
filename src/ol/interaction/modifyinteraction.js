@@ -83,16 +83,6 @@ goog.inherits(ol.interaction.ModifyEvent, ol.events.Event);
 
 
 /**
- * @typedef {{depth: (Array.<number>|undefined),
- *            feature: ol.Feature,
- *            geometry: ol.geom.SimpleGeometry,
- *            index: (number|undefined),
- *            segment: Array.<ol.Extent>}}
- */
-ol.interaction.SegmentDataType;
-
-
-/**
  * @classdesc
  * Interaction for modifying feature geometries.
  *
@@ -110,6 +100,14 @@ ol.interaction.Modify = function(options) {
     handleEvent: ol.interaction.Modify.handleEvent,
     handleUpEvent: ol.interaction.Modify.handleUpEvent_
   });
+
+  /**
+   * @private
+   * @type {ol.events.ConditionType}
+   */
+  this.condition_ = options.condition ?
+      options.condition : ol.events.condition.primaryAction;
+
 
   /**
    * @private
@@ -194,7 +192,7 @@ ol.interaction.Modify = function(options) {
    * @type {Array}
    * @private
    */
-  this.dragSegments_ = null;
+  this.dragSegments_ = [];
 
   /**
    * Draw overlay where sketch features are drawn.
@@ -239,6 +237,12 @@ ol.interaction.Modify = function(options) {
       this.handleFeatureAdd_, this);
   ol.events.listen(this.features_, ol.CollectionEventType.REMOVE,
       this.handleFeatureRemove_, this);
+
+  /**
+   * @type {ol.MapBrowserPointerEvent}
+   * @private
+   */
+  this.lastPointerEvent_ = null;
 
 };
 goog.inherits(ol.interaction.Modify, ol.interaction.Pointer);
@@ -546,8 +550,11 @@ ol.interaction.Modify.compareIndexes_ = function(a, b) {
  * @private
  */
 ol.interaction.Modify.handleDownEvent_ = function(evt) {
+  if (!this.condition_(evt)) {
+    return false;
+  }
   this.handlePointerAtPixel_(evt.pixel, evt.map);
-  this.dragSegments_ = [];
+  this.dragSegments_.length = 0;
   this.modified_ = false;
   var vertexFeature = this.vertexFeature_;
   if (vertexFeature) {
@@ -696,6 +703,7 @@ ol.interaction.Modify.handleEvent = function(mapBrowserEvent) {
   if (!(mapBrowserEvent instanceof ol.MapBrowserPointerEvent)) {
     return true;
   }
+  this.lastPointerEvent_ = mapBrowserEvent;
 
   var handled;
   if (!mapBrowserEvent.map.getView().getHints()[ol.ViewHint.INTERACTING] &&
@@ -709,11 +717,7 @@ ol.interaction.Modify.handleEvent = function(mapBrowserEvent) {
       var geometry = this.vertexFeature_.getGeometry();
       goog.asserts.assertInstanceof(geometry, ol.geom.Point,
           'geometry should be an ol.geom.Point');
-      this.willModifyFeatures_(mapBrowserEvent);
-      handled = this.removeVertex_();
-      this.dispatchEvent(new ol.interaction.ModifyEvent(
-          ol.ModifyEventType.MODIFYEND, this.features_, mapBrowserEvent));
-      this.modified_ = false;
+      handled = this.removePoint();
     } else {
       handled = true;
     }
@@ -879,6 +883,23 @@ ol.interaction.Modify.prototype.insertVertex_ = function(segmentData, vertex) {
   this.ignoreNextSingleClick_ = true;
 };
 
+/**
+ * Removes the vertex currently being pointed.
+ * @return {boolean} True when a vertex was removed.
+ * @api
+ */
+ol.interaction.Modify.prototype.removePoint = function() {
+  var handled = false;
+  if (this.lastPointerEvent_ && this.lastPointerEvent_.type != ol.MapBrowserEvent.EventType.POINTERDRAG) {
+    var evt = this.lastPointerEvent_;
+    this.willModifyFeatures_(evt);
+    handled = this.removeVertex_();
+    this.dispatchEvent(new ol.interaction.ModifyEvent(
+        ol.ModifyEventType.MODIFYEND, this.features_, evt));
+    this.modified_ = false;
+  }
+  return handled;
+};
 
 /**
  * Removes a vertex from all matching features.

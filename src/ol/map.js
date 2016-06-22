@@ -20,11 +20,7 @@ goog.require('ol.MapEventType');
 goog.require('ol.Object');
 goog.require('ol.ObjectEvent');
 goog.require('ol.ObjectEventType');
-goog.require('ol.Pixel');
-goog.require('ol.PostRenderFunction');
-goog.require('ol.PreRenderFunction');
 goog.require('ol.RendererType');
-goog.require('ol.Size');
 goog.require('ol.TileQueue');
 goog.require('ol.View');
 goog.require('ol.ViewHint');
@@ -578,12 +574,12 @@ ol.Map.prototype.disposeInternal = function() {
   ol.events.unlisten(this.viewport_, ol.events.EventType.MOUSEWHEEL,
       this.handleBrowserEvent, this);
   if (this.handleResize_ !== undefined) {
-    goog.global.removeEventListener(ol.events.EventType.RESIZE,
+    ol.global.removeEventListener(ol.events.EventType.RESIZE,
         this.handleResize_, false);
     this.handleResize_ = undefined;
   }
   if (this.animationDelayKey_) {
-    goog.global.cancelAnimationFrame(this.animationDelayKey_);
+    ol.global.cancelAnimationFrame(this.animationDelayKey_);
     this.animationDelayKey_ = undefined;
   }
   this.setTarget(null);
@@ -1077,7 +1073,7 @@ ol.Map.prototype.handleTargetChanged_ = function() {
   if (!targetElement) {
     goog.dom.removeNode(this.viewport_);
     if (this.handleResize_ !== undefined) {
-      goog.global.removeEventListener(ol.events.EventType.RESIZE,
+      ol.global.removeEventListener(ol.events.EventType.RESIZE,
           this.handleResize_, false);
       this.handleResize_ = undefined;
     }
@@ -1095,7 +1091,7 @@ ol.Map.prototype.handleTargetChanged_ = function() {
 
     if (!this.handleResize_) {
       this.handleResize_ = this.updateSize.bind(this);
-      goog.global.addEventListener(ol.events.EventType.RESIZE,
+      ol.global.addEventListener(ol.events.EventType.RESIZE,
           this.handleResize_, false);
     }
   }
@@ -1199,7 +1195,7 @@ ol.Map.prototype.isRendered = function() {
  */
 ol.Map.prototype.renderSync = function() {
   if (this.animationDelayKey_) {
-    goog.global.cancelAnimationFrame(this.animationDelayKey_);
+    ol.global.cancelAnimationFrame(this.animationDelayKey_);
   }
   this.animationDelay_();
 };
@@ -1211,7 +1207,7 @@ ol.Map.prototype.renderSync = function() {
  */
 ol.Map.prototype.render = function() {
   if (this.animationDelayKey_ === undefined) {
-    this.animationDelayKey_ = goog.global.requestAnimationFrame(
+    this.animationDelayKey_ = ol.global.requestAnimationFrame(
         this.animationDelay_);
   }
 };
@@ -1283,10 +1279,11 @@ ol.Map.prototype.renderFrame_ = function(time) {
 
   var size = this.getSize();
   var view = this.getView();
+  var extent = ol.extent.createEmpty();
   /** @type {?olx.FrameState} */
   var frameState = null;
   if (size !== undefined && ol.size.hasArea(size) && view && view.isDef()) {
-    var viewHints = view.getHints();
+    var viewHints = view.getHints(this.frameState_ ? this.frameState_.viewHints : undefined);
     var layerStatesArray = this.getLayerGroup().getLayerStatesArray();
     var layerStates = {};
     for (i = 0, ii = layerStatesArray.length; i < ii; ++i) {
@@ -1297,7 +1294,7 @@ ol.Map.prototype.renderFrame_ = function(time) {
       animate: false,
       attributions: {},
       coordinateToPixelMatrix: this.coordinateToPixelMatrix_,
-      extent: null,
+      extent: extent,
       focus: !this.focus_ ? viewState.center : this.focus_,
       index: this.frameIndex_++,
       layerStates: layerStates,
@@ -1329,7 +1326,7 @@ ol.Map.prototype.renderFrame_ = function(time) {
     preRenderFunctions.length = n;
 
     frameState.extent = ol.extent.getForViewAndSize(viewState.center,
-        viewState.resolution, viewState.rotation, frameState.size);
+        viewState.resolution, viewState.rotation, frameState.size, extent);
   }
 
   this.frameState_ = frameState;
@@ -1446,19 +1443,6 @@ ol.Map.prototype.unskipFeature = function(feature) {
 
 
 /**
- * @typedef {{controls: ol.Collection.<ol.control.Control>,
- *            interactions: ol.Collection.<ol.interaction.Interaction>,
- *            keyboardEventTarget: (Element|Document),
- *            logos: Object.<string, string>,
- *            overlays: ol.Collection.<ol.Overlay>,
- *            rendererConstructor:
- *                function(new: ol.renderer.Map, Element, ol.Map),
- *            values: Object.<string, *>}}
- */
-ol.MapOptionsInternal;
-
-
-/**
  * @param {olx.MapOptions} options Map options.
  * @return {ol.MapOptionsInternal} Internal map options.
  */
@@ -1489,6 +1473,8 @@ ol.Map.createOptionsInternal = function(options) {
     var logo = options.logo;
     if (typeof logo === 'string') {
       logos[logo] = '';
+    } else if (logo instanceof HTMLElement) {
+      logos[goog.getUid(logo).toString()] = logo;
     } else if (goog.isObject(logo)) {
       goog.asserts.assertString(logo.href, 'logo.href should be a string');
       goog.asserts.assertString(logo.src, 'logo.src should be a string');

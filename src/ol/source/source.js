@@ -21,16 +21,6 @@ ol.source.State = {
 
 
 /**
- * @typedef {{attributions: (ol.AttributionLike|undefined),
- *            logo: (string|olx.LogoOptions|undefined),
- *            projection: ol.proj.ProjectionLike,
- *            state: (ol.source.State|undefined),
- *            wrapX: (boolean|undefined)}}
- */
-ol.source.SourceOptions;
-
-
-/**
  * @classdesc
  * Abstract base class; normally only used for creating subclasses and not
  * instantiated in apps.
@@ -40,7 +30,7 @@ ol.source.SourceOptions;
  *
  * @constructor
  * @extends {ol.Object}
- * @param {ol.source.SourceOptions} options Source options.
+ * @param {ol.SourceSourceOptions} options Source options.
  * @api stable
  */
 ol.source.Source = function(options) {
@@ -219,13 +209,4 @@ ol.source.Source.prototype.setLogo = function(logo) {
 ol.source.Source.prototype.setState = function(state) {
   this.state_ = state;
   this.changed();
-};
-
-
-/**
- * Set the projection of the source.
- * @param {ol.proj.Projection} projection Projection.
- */
-ol.source.Source.prototype.setProjection = function(projection) {
-  this.projection_ = projection;
 };

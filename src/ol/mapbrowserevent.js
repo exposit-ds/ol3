@@ -5,9 +5,7 @@ goog.provide('ol.MapBrowserPointerEvent');
 
 goog.require('goog.asserts');
 goog.require('ol');
-goog.require('ol.Coordinate');
 goog.require('ol.MapEvent');
-goog.require('ol.Pixel');
 goog.require('ol.events');
 goog.require('ol.events.EventTarget');
 goog.require('ol.events.EventType');
@@ -223,14 +221,14 @@ ol.MapBrowserEventHandler.prototype.emulateClick_ = function(pointerEvent) {
   this.dispatchEvent(newEvent);
   if (this.clickTimeoutId_ !== 0) {
     // double-click
-    goog.global.clearTimeout(this.clickTimeoutId_);
+    ol.global.clearTimeout(this.clickTimeoutId_);
     this.clickTimeoutId_ = 0;
     newEvent = new ol.MapBrowserPointerEvent(
         ol.MapBrowserEvent.EventType.DBLCLICK, this.map_, pointerEvent);
     this.dispatchEvent(newEvent);
   } else {
     // click
-    this.clickTimeoutId_ = goog.global.setTimeout(function() {
+    this.clickTimeoutId_ = ol.global.setTimeout(function() {
       this.clickTimeoutId_ = 0;
       var newEvent = new ol.MapBrowserPointerEvent(
           ol.MapBrowserEvent.EventType.SINGLECLICK, this.map_, pointerEvent);

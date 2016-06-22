@@ -1,7 +1,6 @@
 goog.provide('ol.interaction.Select');
 goog.provide('ol.interaction.SelectEvent');
 goog.provide('ol.interaction.SelectEventType');
-goog.provide('ol.interaction.SelectFilterFunction');
 
 goog.require('goog.asserts');
 goog.require('ol.functions');
@@ -29,17 +28,6 @@ ol.interaction.SelectEventType = {
    */
   SELECT: 'select'
 };
-
-
-/**
- * A function that takes an {@link ol.Feature} or {@link ol.render.Feature} and
- * an {@link ol.layer.Layer} and returns `true` if the feature may be selected
- * or `false` otherwise.
- * @typedef {function((ol.Feature|ol.render.Feature), ol.layer.Layer):
- *     boolean}
- * @api
- */
-ol.interaction.SelectFilterFunction;
 
 
 /**
@@ -280,6 +268,7 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
     // Replace the currently selected feature(s) with the feature(s) at the
     // pixel, or clear the selected feature(s) if there is no feature at
     // the pixel.
+    ol.object.clear(this.featureLayerAssociation_);
     map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
         /**
          * @param {ol.Feature|ol.render.Feature} feature Feature.
@@ -303,16 +292,6 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
         features.clear();
       }
       features.extend(selected);
-      // Modify object this.featureLayerAssociation_
-      if (selected.length === 0) {
-        ol.object.clear(this.featureLayerAssociation_);
-      } else {
-        if (deselected.length > 0) {
-          deselected.forEach(function(feature) {
-            this.removeFeatureLayerAssociation_(feature);
-          }, this);
-        }
-      }
     }
   } else {
     // Modify the currently selected feature(s).
