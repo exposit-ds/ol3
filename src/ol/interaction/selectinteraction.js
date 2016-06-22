@@ -282,7 +282,7 @@ ol.interaction.Select.handleEvent = function(mapBrowserEvent) {
             return !this.multi_;
           }
         }, this, this.layerFilter_);
-    if (selected.length > 0 && features.getLength() == 1 &&
+    if (selected.length == 1 && features.getLength() == 1 &&
         features.item(0) == selected[0]) {
       // No change
     } else {
